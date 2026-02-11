@@ -6,23 +6,37 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const fetchJobs = async (filters: SearchFilters): Promise<Job[]> => {
   const prompt = `
-    Find 20-30 CURRENTLY ACTIVE and OPEN job openings in Taiwan based on these criteria:
+    Task: Find 20-30 REAL, CURRENTLY ACTIVE, and OPEN job openings in Taiwan.
+    
+    CRITICAL INSTRUCTION FOR URLS:
+    - You MUST provide the ACTUAL, REAL direct application links for each job.
+    - DO NOT generate simulated, example, or placeholder URLs (e.g., avoid "example.com", "link-to-job-123", or pattern-based fake IDs).
+    - Use your Google Search tool to find the live listings on these specific platforms: LinkedIn, 104 Job Bank, 1111 Job Bank, CakeResume, and Yourator.
+    - If you cannot find a direct link to the specific job, find the most relevant real search results page on that platform for that job title and company.
+    
+    Search Criteria:
     - Job Title Scope: ${filters.jobTitle}
     - Industries: ${filters.industries.join(', ')}
     - Locations: ${filters.locations.join(', ')}
     - Experience Levels: ${filters.experienceLevels.join(', ')}
 
-    Search sources MUST include: LinkedIn, 104 Job Bank, 1111 Job Bank, CakeResume, and Yourator.
-    CRITICAL: Only provide jobs that are confirmed to be currently hiring. Avoid expired listings.
-    
-    For each job, provide: id, title, company, location, salary (clean numeric range or clear text in TWD, avoid redundant labels), years of experience required, industry, source, description, requirements, and direct application link.
-    
-    SPECIAL REQUIREMENTS:
-    1. LinkedIn Mentors: Provide 3 simulated LinkedIn Profiles (name, role, url).
-    2. Mentor Analysis: Provide a brief analysis (30-50 words) of the common skills, education backgrounds, or traits shared by successful people in this role at this company.
-    3. Company Evaluation: Provide a summary of the company's reputation and employee evaluations based on public info from forums (e.g. PTT, Dcard, Job Sky Eye/求職天眼通). Be objective.
+    For each job, provide:
+    1. id: A unique string identifier.
+    2. title: The actual job title.
+    3. company: The real hiring company name.
+    4. location: City/District in Taiwan.
+    5. salary: Real salary range or "面議" as stated in the listing. Clean TWD text.
+    6. experience: Real experience requirements.
+    7. source: One of: LinkedIn, 104, 1111, CakeResume, Yourator.
+    8. description: A clear summary in Traditional Chinese.
+    9. requirements: Key points from the actual listing.
+    10. link: THE ACTUAL VERIFIED URL to the job posting.
+    11. linkedInEmployees: Real names (if possible) or highly realistic profiles of people currently in similar roles at that company, with REAL or highly accurate LinkedIn search/profile URLs.
+    12. mentorAnalysis: A professional analysis in Traditional Chinese of successful profiles for this role.
+    13. companyReviews: Accurate reputation summary from PTT/Dcard/Job Sky Eye.
 
-    Ensure the data looks authentic and professional. Use Traditional Chinese for all textual content.
+    Output Language: Traditional Chinese (zh-TW).
+    Response Format: Strictly valid JSON.
   `;
 
   try {
@@ -51,7 +65,7 @@ export const fetchJobs = async (filters: SearchFilters): Promise<Job[]> => {
                 items: { type: Type.STRING }
               },
               postedAt: { type: Type.STRING },
-              link: { type: Type.STRING },
+              link: { type: Type.STRING, description: "REAL verified URL to the job listing" },
               linkedInEmployees: {
                 type: Type.ARRAY,
                 items: {
@@ -59,7 +73,7 @@ export const fetchJobs = async (filters: SearchFilters): Promise<Job[]> => {
                   properties: {
                     name: { type: Type.STRING },
                     role: { type: Type.STRING },
-                    url: { type: Type.STRING }
+                    url: { type: Type.STRING, description: "REAL LinkedIn profile or search URL" }
                   },
                   required: ["name", "role", "url"]
                 }
